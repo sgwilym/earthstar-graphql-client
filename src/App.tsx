@@ -1,12 +1,14 @@
 import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, queryCache } from "react-query";
 import { generateAuthorKeypair, AuthorKeypair } from "earthstar";
-import { query, makeMemoryContext } from "earthstar-graphql";
+import { query, createSchemaContext } from "earthstar-graphql";
 import "./App.css";
 
 // Set up context to query against
 
-var ctx = makeMemoryContext(["+gardening.xxxxxxxxxxxxxxxxxxxx", "+react.123"]);
+var ctx = createSchemaContext("MEMORY", {
+  workspaceAddresses: ["+gardening.xxxxxxxxxxxxxxxxxxxx", "+react.123"],
+});
 
 // GraphQL query strings to pass to our query fn
 
@@ -30,7 +32,7 @@ const WORKSPACE_QUERY = `query AppQuery {
 
 const SET_MUTATION = `mutation SetMutation(
   $author: AuthorInput!
-  $document: DocumentInput!
+  $document: NewDocumentInput!
   $workspace: String!
 ) {
   set(author: $author, document: $document, workspace: $workspace) {
@@ -45,12 +47,15 @@ const SET_MUTATION = `mutation SetMutation(
 `;
 
 const SYNC_MUTATION = `mutation SyncMutation($workspace: String!, $pubUrl: String!) {
-  sync(workspace: $workspace, pubUrl: $pubUrl) {
-    syncedWorkspace {
-      documents {
-        __typename
+  syncWithPub(workspace: $workspace, pubUrl: $pubUrl) {
+    ... on SyncSuccess {
+      syncedWorkspace {
+        documents {
+          __typename
+        }
       }
     }
+    
   }
 }
 `;
