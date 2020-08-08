@@ -7,7 +7,7 @@ import "./App.css";
 // Set up context to query against
 
 var ctx = createSchemaContext("MEMORY", {
-  workspaceAddresses: ["+gardening.xxxxxxxxxxxxxxxxxxxx", "+react.123"],
+  workspaceAddresses: ["+gardening.xxxxxxxxxxxxxxxxxxxx", "+react.a123"],
 });
 
 // GraphQL query strings to pass to our query fn
@@ -18,9 +18,9 @@ const WORKSPACE_QUERY = `query AppQuery {
     address
     population
     documents {
-      ... on ES3Document {
+      ... on ES4Document {
         path
-        value
+        content
         author {
           shortName
         }
@@ -47,7 +47,7 @@ const SET_MUTATION = `mutation SetMutation(
 `;
 
 const SYNC_MUTATION = `mutation SyncMutation($workspace: String!, $pubUrl: String!) {
-  syncWithPub(workspace: $workspace, pubUrl: $pubUrl) {
+  syncWithPub(workspace: $workspace, pubUrl: $pubUrl, format: GRAPHQL) {
     ... on SyncSuccess {
       syncedWorkspace {
         documents {
@@ -63,7 +63,11 @@ const SYNC_MUTATION = `mutation SyncMutation($workspace: String!, $pubUrl: Strin
 // fns for querying earthstar-graphql
 
 async function getWorkspaces() {
-  const { data } = await query<WorkspaceQuery>(WORKSPACE_QUERY, {}, ctx);
+  const { data, errors } = await query<WorkspaceQuery>(
+    WORKSPACE_QUERY,
+    {},
+    ctx
+  );
 
   return data;
 }
@@ -101,7 +105,7 @@ type WorkspaceQuery = {
     population: number;
     documents: {
       path: string;
-      value: string;
+      content: string;
       author: {
         shortName: string;
       };
@@ -160,7 +164,7 @@ const WorkspaceListing = ({ workspace }: WorkspaceListingProps) => {
             }
             mutate({
               workspace: workspace.address,
-              pubUrl: "https://cinnamon-bun-earthstar-pub3.glitch.me",
+              pubUrl: "https://earthstar-graphql-pub.glitch.me",
             });
           }}
           disabled={status === "loading"}
@@ -172,7 +176,7 @@ const WorkspaceListing = ({ workspace }: WorkspaceListingProps) => {
         return (
           <p>
             Posted by <b>{doc.author.shortName}</b> to <b>{doc.path}</b>:{" "}
-            {doc.value}
+            {doc.content}
           </p>
         );
       })}
